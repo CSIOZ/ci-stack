@@ -1,0 +1,65 @@
+version: "2"
+
+services:
+  jenkins: 
+    container_name: jenkins6
+    hostname: jenkins
+    image: jenkins
+    ports:
+      - "8080:8080"
+      - "50000:50000"
+    networks: 
+      - zoo
+    volumes: 
+      - ./volumes/jenkins/jenkins_home:/var/jenkins_home
+
+  bitbucket:
+      container_name: bitbucket6
+      hostname: bitbucket
+      image: atlassian/bitbucket-server
+      ports:
+        - "7990:7990"
+      networks:
+        - zoo
+      volumes:
+        - ./volumes/bitbucket/application-data:/var/atlassian/application-data/bitbucket
+      depends_on:
+        - jenkins
+
+  sonarqube:
+    container_name: sonarqube6
+    hostname: sonarqube
+    image: sonarqube
+    ports:
+      - "9000:9000"
+    networks:
+      - zoo
+    volumes:
+      - ./volumes/sonarqube/conf:/opt/sonarqube/conf
+      - ./volumes/sonarqube/data:/opt/sonarqube/data
+      - ./volumes/sonarqube/extensions:/opt/sonarqube/extensions
+      - ./volumes/sonarqube/sonarqube_bundled_plugins:/opt/sonarqube/lib/bundled-plugins
+    depends_on:
+      - jenkins
+      - bitbucket
+
+  artifactory:
+    container_name: artifactory6
+    hostname: artifactory
+    image: docker.bintray.io/jfrog/artifactory-oss:latest
+    ports: 
+      - "8081:8081"
+    networks: 
+      - zoo
+    volumes:
+      - ./volumes/artifactory/data:/var/opt/jfrog/artifactory/data
+      - ./volumes/artifactory/logs:/var/opt/jfrog/artifactory/logs
+      - ./volumes/artifactory/etc:/var/opt/jfrog/artifactory/etc
+    depends_on:
+      - jenkins
+      - bitbucket
+      - sonarqube
+
+networks:
+  zoo:
+    driver: bridge
